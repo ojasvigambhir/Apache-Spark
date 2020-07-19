@@ -1,0 +1,30 @@
+Description:
+Return a column that generates monotonically increasing 64-bit integers.
+
+Detail
+The generated ID is guaranteed to be monotonically increasing and unique, but not consecutive. The current implementation puts the partition ID in the upper 31 bits, and the record number within each partition in the lower 33 bits. The assumption is that the SparkDataFrame has less than 1 billion partitions, and each partition has less than 8 billion records.
+As an example, consider a SparkDataFrame with two partitions, each with 3 records. This expression would return the following IDs: 0, 1, 2, 8589934592 (1L << 33), 8589934593, 8589934594.
+
+Syntax:
+ val df = inputDF.withColumn(seqID,monotonically_increasing_id())
+ 
+Challenges/Issues:
+
+We used it to have unique id column assigned to a dataframe and then perform some transformation and then use this column as join key.
+
+For example:
+
+val df = inputDF.withColumn(seqID,monotonically_increasing_id())
+
+val transformDF= df.withColumn("someColumn",someTransformation)
+
+val finalDF=  transformDF.join(df,"seqID")
+
+We will notice that seqID will have different vlaues for df and transformDF dataframe.
+ 
+Reason:
+We faced this issue because dependency of this function on parition id to calulate value for each row.
+This means that due to lazy evaluation of Saprk this function uses the partition IDs of transformDF when doing the computation for transformDF, while it uses the partition IDs of df when doing the computation for df.
+Possible fix will be cache the df dataframe , but there is a catch spark will keep the dataframe in memeory till there is memory for further computation otherwise it will evict the Dataframe snd revalutate it when needed , leading again to wrong results.
+
+ 
