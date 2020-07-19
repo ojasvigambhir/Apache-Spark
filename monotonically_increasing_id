@@ -27,4 +27,6 @@ We faced this issue because dependency of this function on parition id to calula
 This means that due to lazy evaluation of Saprk this function uses the partition IDs of transformDF when doing the computation for transformDF, while it uses the partition IDs of df when doing the computation for df.
 Possible fix will be cache the df dataframe , but there is a catch spark will keep the dataframe in memeory till there is memory for further computation otherwise it will evict the Dataframe snd revalutate it when needed , leading again to wrong results.
 
- 
+Possible solution:
+Using zipWithIndex RDD transformation to create unique ids.
+  
